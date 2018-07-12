@@ -47,17 +47,39 @@
 
 
 def localize(colors, measurements, motions, sensor_right, p_move):
+    assert len(measurements) == len(motions), 'motions and measurements length is not the same'
     # initializes p to a uniform distribution over a grid of the same dimensions as colors
     p_init = 1.0 / float(len(colors)) / float(len(colors[0]))
     p = [[p_init for _ in range(len(colors[0]))] for _ in range(len(colors))]
 
-    # >>> Insert your code here <<<
+    for i in range(len(measurements)):
+        p = move(p, motions[i], p_move)
+        p = sense(p, measurements[i], colors, sensor_right)
 
     return p
 
 
-def sense_p():
-    pass
+def sense(p, measurement, colors, sensor_right):
+    """
+    :param p: occurring probability in the world before movement, 2D list
+    :param measurement: measurement of color, `R` for red, `G` for green
+    :param colors: color array of world
+    :param sensor_right: probability of measurement is correct
+    :return: new occurring probability in the world after measurement
+    """
+    q = [[] for _ in p]
+    for i in range(len(p)):
+        for j in range(len(p[i])):
+            hit = (measurement == colors[i][j])
+            q[i].append(p[i][j] * (hit * sensor_right + (1 - hit) * (1 - sensor_right)))
+    s = 0
+    for i in range(len(q)):
+        s += sum(q[i])
+
+    for i in range(len(q)):
+        for j in range(len(q[i])):
+            q[i][j] = q[i][j] / s
+    return q
 
 
 def move(p, motion, p_move):
